@@ -23,7 +23,7 @@
 definition(
     name: "Thermostat Fan On/Auto V-Switch v4.0",
     namespace: "DR",
-    author: "Joseph Quander III",
+    author: "DarcRanger",
     description: "Switch used primarily with dashboards, like SmartTiles.  This fills the void of not having control of the Thermostat Fan from the tile.  Using Virtual Switch to turn the thermostat fan from on to auto and back.",
     category: "Green Living",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
