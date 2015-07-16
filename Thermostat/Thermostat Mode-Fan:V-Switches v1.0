@@ -14,12 +14,12 @@
  *
  *	Version History
  *		V1.0 2015-07-15: Combined Thermostat Mode control with Thermostat Fan control in one app
- *
+ *		V1.1 2015-07-15: Add Operation State to AppTouch PushNotification
  *
  *
  */
 definition(
-    name: "Thermostat Mode/Fan:V-Switches v1",
+    name: "Thermostat Mode/Fan:V-Switches v1.1",
     namespace: "DR",
     author: "DarcRanger",
     description: "App used primarily with dashboards,like SmartTiles.  This fills the void of not have control of the Thermostat Modes and Thermostat Fan from the dashboard. This App uses virtual switches to change the Thermostat Mode from HEAT/COOL/AUTO/OFF and also turns the Thermostat Fan from on to auto and back. Thermostat/V-Switch updates activity between them.",
@@ -362,5 +362,6 @@ def appTouch(evt) {
 	log.debug "appTouch: $evt.value, $evt"
 	log.debug "Notify Thermofan-Status: " + thermostat.currentValue("thermostatFanMode")
 	log.debug "Notify ThermoMode-Status: " + thermostat.currentValue("thermostatMode")
-        sendPush("ThermoMode-Status: " + thermostat.currentValue("thermostatMode") + " Thermofan-Status: " + thermostat.currentValue("thermostatFanMode"))
+        log.debug "Notify Thermostat-State: " + thermostat.currentValue("thermostatOperatingState")
+        sendPush("ThermoMode-Status: " + thermostat.currentValue("thermostatMode") + "  |Thermostat-State: " + thermostat.currentValue("thermostatOperatingState") + " | Thermofan-Status: " + thermostat.currentValue("thermostatFanMode"))
     }
