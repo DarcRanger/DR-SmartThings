@@ -47,10 +47,10 @@ preferences {
 
 	}
     }
-	//section( "Notifications" ) {
-		//input "sendPushMessage", "enum", title: "Send a push notification?", metadata:[values:["Yes","No"]], required:false
+	section( "Notifications" ) {
+		input "sendPushMessage", "enum", title: "Send a push notification?", metadata:[values:["Yes","No"]], required:false
 		//input "phone", "phone", title: "Send a Text Message?", required: false
-    //}
+    }
 
 def installed()
 {
@@ -70,7 +70,7 @@ def initSettings()
 	if (state.modeStartTime == null) {
 		state.modeStartTime = 0
 	}
-    //astroCheck()
+    astroCheck()
 		//schedule("0 1 * * * ?", astroCheck) // check every hour since location can change without event?   
 }
 
@@ -100,11 +100,11 @@ def presenceHandler(evt)
 	if ((presenceValue) && (resultQ == true)) {
         switch1.on()
 		log.debug "Someone's home! ...$presenceValue and Lighting Activated"
-       // sendPush("$presence1 has Arrived at $location and Lighting Activated")
+       if (sendPushMessage) {sendPush("$presence1 has Arrived at $location and Lighting Activated")}
 		scheduleSwitchOff(minutes)
     }
     else if ((presenceValue) && (resultQ == false)) {
-        //sendPush("$presence1 has Arrived at $location and Lighting NOT Activated")
+	if (sendPushMessage) {sendPush("$presence1 has Arrived at $location and Lighting NOT Activated")}
 
 	}
    
