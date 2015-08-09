@@ -42,7 +42,7 @@
 
 definition(
     name: "Travel Time Guru",
-    namespace: "DRT",
+    namespace: "Darc Ranger",
     author: "Tim Slagle=[tslagle13]",
     description: "Uses the Bing Maps Maps API to calculate your time of travel to a destination with current traffic and alerts you via push, sonsos, or hue bulbs when you need to leave.",
     category: "My Apps",
@@ -139,7 +139,7 @@ def notificationSettings(){
         }
 
 	section("Alert Settings"){
-         	input "sendTextMessage", "bool", title: "Send a text notification?", required: false, defaultValue: "false"
+            input "sendTextMessage", "bool", title: "Send a text notification?", required: false, defaultValue: "false"
             input "phone", "phone", title: "Phone Number (for SMS, optional)", required: false
             input "sendPushMessage", "bool", title: "Send a push notification?", required: false, defaultValue: "false" //, metadata:[values:["Yes","No"]], required:false
             input "sonos", "capability.musicPlayer", title:"Speak message via: (optional) ", multiple: true, required: false
@@ -226,7 +226,7 @@ state.ending = ending
     	subscribe(trigger, "momentary.pushed", trafficCheck)
     }
    if(checkTime){
-   	def checkHour = Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSSX", checkTime).format('H', TimeZone.getTimeZone('America/New_York')) //setTimeZone(location.timeZone)
+    def checkHour = Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSSX", checkTime).format('H', TimeZone.getTimeZone('America/New_York')) //setTimeZone(location.timeZone)
     def checkHourAP = Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSSX", checkTime).format('h', TimeZone.getTimeZone('America/New_York')) //setTimeZone(location.timeZone)
     def checkMinute = Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSSX", checkTime).format('mm', TimeZone.getTimeZone('America/New_York'))//TimeZone.getTimeZone('EST')) "America/New_York"
 
@@ -251,8 +251,7 @@ def checkTimeHandler(){
     }
     else {
    		//unschedule("checkTimeHandler")
-    	log.debug "Its not time anymore"
-        sendPush ("Darc. Its not time anymore(checkTimeHandler)")
+    	log.debug "Its not time anymore (checkTimeHandler)."
         //initialize()
     }
 }
@@ -486,7 +485,7 @@ result
 def totalTravelTime(evt){
 if(allOk || app) {
 	getTimeLeft()
-    if(sendPushMessage){
+    if(sendPushMessage || sendTextMessage){
 	sendPush (app.label + ": With traffic, the estimated travel time is ${state.travelTimeTraffic} minutes from ${location1a} to ${location2a}.")
     }
 	log.info ("With traffic, the estimated travel time is ${state.travelTimeTraffic} minutes from ${location1a} to ${location2a}.")
