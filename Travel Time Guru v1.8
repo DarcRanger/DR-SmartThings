@@ -93,11 +93,11 @@ def wayPoints(){
         }
         section("Starting Way Point"){	
             input "location1a", "text", title: "Starting Location Name", required: false, defaultValue: "Home"
-            input "location1", "text", title: "Starting Address", required: True, defaultValue: "7526 Val Lane District Heights, MD 20747"
+            input "location1", "text", title: "Starting Address", required: True
          }
          section("Ending Way Point"){	
             input "location2a", "text", title: "Destination Name", required: false, defaultValue: "Work"
-            input "location2", "text", title: "Destination Address", required: True, defaultValue: "10903 New Hampshire Ave Silver Spring, MD 20993"
+            input "location2", "text", title: "Destination Address", required: True
         }	  
     }
 }
@@ -163,7 +163,7 @@ def apiKey(){
             paragraph "Here you will need to provide the Bing Maps API key you got from the bingmapsportal.  You will need to go to bingmapsportal.com and sign up for a dev account which will provide you with a secret key you can use to acccess their API"
         }
         section("Bing Maps API Key"){
-            input "apiKey", "text", title: "Microsoft API Secret Key", required: True, defaultValue: "Ar5noXtoJS9BXmeDFuSokH6EhhG9AalwzuIi3FD36ZL4VfWxO3iNoE5sq6JZ1hf8"
+            input "apiKey", "text", title: "Microsoft API Secret Key", required: True
         }	  
     }
 }
