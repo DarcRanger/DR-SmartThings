@@ -1,7 +1,7 @@
 /**
  *  Thermostat Setpoints  using Virtual Dimmers
  *
- *  Copyright 2015 Joseph Quander III
+ *  Copyright 2015 Darc Ranger
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -19,7 +19,7 @@
 definition(
     name: "Thermostat Setpoints: V-Dimmers v1",
     namespace: "DR",
-    author: "Joseph Quander III",
+    author: "DarcRanger",
     description: "This app uses two virtual dimmer switches to control Setpoint temperatures on a Thermostat.  This was develop to use with the Amazon Echo.",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Meta/temp_thermo-switch.png",
