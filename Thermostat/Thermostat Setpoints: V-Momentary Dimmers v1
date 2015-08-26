@@ -109,8 +109,8 @@ def TempMode = null
 def switchSetLevelHandlerH(evt){
 def TempMode = "Heating"
 state.TempMode = TempMode
-//if ((evt.value == "on") || (evt.value == "off" ))
-	//return
+if ((evt.value == "on") || (evt.value == "off" ))
+	return
 def level = evt.value.toFloat()
 //log.debug "level: $level"
 level = level.toInteger()
@@ -136,8 +136,8 @@ thermostat.setHeatingSetpoint(state.level)
 def switchSetLevelHandlerC(evt){
 def TempMode = "Cooling"
 state.TempMode = TempMode
-//if ((evt.value == "on") || (evt.value == "off" ))
-	//return
+if ((evt.value == "on") || (evt.value == "off" ))
+	return
 def level = evt.value.toFloat()
 //log.debug "level: $level"
 level = level.toInteger()
