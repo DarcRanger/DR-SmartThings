@@ -17,11 +17,15 @@
  *	Date: 2015-08-25 Version 1.0 - Created App: Based on my Original version with Virtual Dimmer Switch instead of my custom Momentary Dimmer device type.
  * 	Date: 2015-08-25 Version 1.1 - Modified App: Re-added with on/off and return commands
  *	Date: 2015-08-26 Version 2.0 - Modified App: Replace setHeatingSetpoint()/setCoolingSetpoint() with quickSetHeat()/quickSetCool(), since the quick set
- *									command for the Thermostat device type has a much shorter delay action. Cleaned up unused/left over code.
- *									
+ *						command for the Thermostat device type has a much shorter delay action. Cleaned up unused/left over code.
+ *	Date: 2015-08-26 Version 2.1 - Modified App: Added option to chose between the normal setpoint method and the quickSet Method.  This quickSet method is
+ *						used in some thermostat device types.  In those device types there is a delay build into trigger the thermostat change
+ *						via the switch.  The delay is longer on normal setting and greatly reduced on the quickSet Method.
+ *
+ *
  */
 definition(
-    name: "Thermostat Setpoints: V-Momentary Dimmers v2",
+    name: "Thermostat Setpoints: V-Momentary Dimmers v2.1",
     namespace: "DR",
     author: "Joseph Quander III",
     description: "This app uses two custom virtual momentary dimmer switches to control Setpoint temperatures on a Thermostat.  This was develop to use with the Amazon Echo.",
@@ -32,8 +36,41 @@ definition(
     
     )
     
+    // page(name: "mainPage", title: "app.label + " is configured as follows:", nextPage: "Switches, uninstall: true) {
+    //page(name: "pageThree", title: "Name app and configure modes", install: true, uninstall: true) {
     
 preferences {
+
+page(name: "mainPage", title: app.label + " is configured as follows:", nextPage: "Switches", uninstall: true) {
+section("This thermostat will be updated") {
+	input "thermostat", "capability.thermostat", 
+		multiple: false, 
+		title: "Thermostat", 
+		required: true
+}
+    section("Notify me...") {
+     input "pushNotification_Setpoint", "bool", title: "Thermostat Mode change with Push Notification", required: false, defaultValue: "false"
+}
+        section([title:"Options", mobileOnly:true]) {
+            label title:"Assign a name", required:false
+        }
+}
+
+page(name: "Switches", title: "Switch Method", nextPage: "Setpoints") {
+/*section("Select Heating SetPoint Dimmer") { 
+	input "Heating", "capability.switchLevel", 
+		multiple: false, 
+		title: "Heating Dimmer Switch...", 
+		required: true
+}
+
+section("Select Cooling SetPoint Dimmer") { 
+	input "Cooling", "capability.switchLevel", 
+		multiple: false, 
+		title: "Cooling Dimmer Switch...", 
+		required: true
+}*/
+
 section("Select Heating SetPoint Dimmer") { 
 	input "Heating", "capability.momentary", 
 		multiple: false, 
@@ -47,14 +84,9 @@ section("Select Cooling SetPoint Dimmer") {
 		title: "Cooling Dimmer Switch...", 
 		required: true
 }
-
-section("This thermostat will be updated") {
-	input "thermostat", "capability.thermostat", 
-		multiple: false, 
-		title: "Thermostat", 
-		required: true
 }
 
+page(name: "Setpoints", title: "setPoints are configured as follows:", install: true, uninstall: true) {
 section("Setpoint Default Limits: Minimum/Maximum [50/80]") {
 	input "setMinimum", "number", 
 		multiple: false, 
@@ -69,35 +101,40 @@ section("Setpoint Default Limits: Minimum/Maximum [50/80]") {
         defaultValue: "80"
 }
 
-    section("Notify me...") {
-     input "pushNotification_Setpoint", "bool", title: "Thermostat Mode change with Push Notification", required: false, defaultValue: "false"
+section("Thermostat setPoint method: setHeatingSetpoint()/setCoolingSetpoint() or quickSetHeat()/quickSetCool()") {
+	input "setMethod", "enum", 
+		multiple: false, 
+		title: "Select Setpoint Method", 
+		required: true,
+        options: ["Default", "quickSet"],
+        defaultValue: "Default"
 }
 }
-
+}
 def installed()
 {
-
-    subscribe(Heating, "switch.setLevel", switchSetLevelHandlerH)
-    subscribe(Heating, "switch", switchSetLevelHandlerH)
-    subscribe(Cooling, "switch.setLevel", switchSetLevelHandlerC)
-    subscribe(Cooling, "switch", switchSetLevelHandlerC)
-        subscribe(thermostat, "heatingSetpoint", heatingSetpointHandler)
-        subscribe(thermostat, "coolingSetpoint", coolingSetpointHandler)
 	log.debug "Installed with settings: ${settings}"
+    initialize()
 }
 
 def updated()
 {
 unsubscribe()
+	log.info "subscribed to all of switches events"
+	log.debug "Updated with settings: ${settings}"
+    initialize()
+}
+
+def initialize(){
     subscribe(Heating, "switch.setLevel", switchSetLevelHandlerH)
     subscribe(Heating, "switch", switchSetLevelHandlerH)
     subscribe(Cooling, "switch.setLevel", switchSetLevelHandlerC)
     subscribe(Cooling, "switch", switchSetLevelHandlerC)
         subscribe(thermostat, "heatingSetpoint", heatingSetpointHandler)
         subscribe(thermostat, "coolingSetpoint", coolingSetpointHandler)
-	log.info "subscribed to all of switches events"
-	log.debug "Updated with settings: ${settings}"
+        //log.debug "Initialized with settings: ${settings}"
 }
+
 
 def TempMode = null
 
@@ -123,10 +160,14 @@ log.debug "Thermostat SetLevel below limit: $level.  Reset to maximum Temperatur
 }
 
 log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
-    state.ThermoHPoint = thermostat.currentValue("heatingSetpoint")
-//thermostat.setHeatingSetpoint(state.level)
-thermostat.quickSetHeat(state.level)
-log.debug "state.ThermoHPoint: $state.ThermoHPoint"
+    state.ThermoHPoint = thermostat.currentValue("heatingSetpoint")   
+    if(setMethod == "Default"){
+    thermostat.setHeatingSetpoint(state.level)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetHeat(state.level)
+    }    
+    log.debug "state.ThermoHPoint: $state.ThermoHPoint | Level: $state.level | setMethod: $setMethod"
 }
 
 //------------------Level-Cool---------------------
@@ -152,9 +193,13 @@ log.debug "Thermostat SetLevel below limit: $level.  Reset to maximum Temperatur
 
 log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
     state.ThermoCPoint = thermostat.currentValue("coolingSetpoint")
-//thermostat.setCoolingSetpoint(state.level)
-thermostat.quickSetCool(state.level)
-log.debug "state.ThermoCPoint: $state.ThermoCPoint | Level: $state.level"
+    if(setMethod == "Default"){
+    thermostat.setCoolingSetpoint(state.level)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetCool(state.level)
+    }
+	log.debug "state.ThermoCPoint: $state.ThermoCPoint | Level: $state.level | setMethod: $setMethod"
 }
 
 //------------------SetPoint-Cooling---------------
