@@ -221,8 +221,8 @@ log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
     Cooling.off(delay: 2500)
 }
 //------------------SetPoint-Heating---------------   
-   if(setSync) {
    def heatingSetpointHandler(evt) {
+      if(setSync) {
    def TempMode = "Heating"
    state.TempMode = TempMode
         log.debug ""
@@ -246,8 +246,9 @@ log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
 }
 
 //------------------SetPoint-Cooling---------------
-	if(setSync) {
+
 	def coolingSetpoint(evt) {
+	   if(setSync) {
 	def TempMode = "Cooling"
     state.TempMode = TempMode
 		log.debug ""
