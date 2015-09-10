@@ -16,23 +16,34 @@
  *
  *	Date: 2015-08-28 Version 1.0 - Created App: Based on my Original version with Virtual Dimmer Switch.  
  *		Added several options.
- *			A.	You can select push notifications styles, either Alert push notifications or silent style notifications.  *        	Both versions will appear in event history within the SmartThings phone app.
+ *			A.	You can select push notifications styles, either Alert push notifications or silent style notifications.  
+ *        	Both versions will appear in event history within the SmartThings phone app.
  *
  *			B.	Added option to select device types for switchLevel Dimmer and my custom Momentary Dimmer.
- *					Caution: Be careful switching device types after installation.  The Momentary Dimmers will show under    *          the switchLevel Dimmer Type, but the switchLevel Dimmer will not appear under the Momentary device type.  *          At this time the app will let you move forward, but the selected switchLevel Dimmers will not appear     *          under the Momentary Dimmer selection screen.
+ *					Caution: Be careful switching device types after installation.  The Momentary Dimmers will show under    
+ *          the switchLevel Dimmer Type, but the switchLevel Dimmer will not appear under the Momentary device type.  
+ *          At this time the app will let you move forward, but the selected switchLevel Dimmers will not appear     
+ *          under the Momentary Dimmer selection screen.
  *					The app is coded to work around this issue, and you can still reselect your switch choice.
  *
  *			C.	Added setHeatingSetpoint()/setCoolingSetpoint() with quickSetHeat()/quickSetCool(), since the quick set
- *				command for the Thermostat device type has a much shorter delay action in the custom Thermostat device     *        type I am using. Other Thermostat device types do may not have quickSet option and may not have any build  *        in implemetation delays with the standard SetPoint commands.
- * 	
- *	To obtain my Customized Virtual Momentary Dimmer, please visit:
+ *				command for the Thermostat device type has a much shorter delay action in the custom Thermostat device     
+ *        type I am using. Other Thermostat device types do may not have quickSet option and may not have any build  
+ *        in implemetation delays with the standard SetPoint commands.
+ *
+ * 	Date: 2015-09-09 Version 1.1
+ *	  Added option to disable sync between thermostat and dimmer/momentary switch when the thermostat is changed.  
+ *    Changing the dimmer level will still change the thermostat.  This is a workaround for possible issue with 
+ *    celsius conversion with dimmer at temperatures below 30C.
+ *
+ *  To obtain my Customized Virtual Momentary Dimmer, please visit:
  *	https://github.com/DarcRanger/DR-SmartThings/tree/master/Custom-Devices
  *			
  *	
  *
  */
 definition(
-    name: "Thermostat Setpoints: V-Dimmer/Momentary Switches v1",
+    name: "Thermostat Setpoints: V-Dimmer|Momentary Switches v1.1",
     namespace: "DR",
     author: "Joseph Quander III",
     description: "This app uses two custom virtual momentary dimmer switches to control Setpoint temperatures on a Thermostat.  This was develop to use with the Amazon Echo.",
@@ -112,6 +123,9 @@ section("Setpoint Default Limits: Minimum/Maximum [50/80]") {
 
 section("Thermostat setPoint method: setHeatingSetpoint()/setCoolingSetpoint() or quickSetHeat()/quickSetCool()") {
 	input "setMethod", "enum", multiple: false, title: "Select Setpoint Method", required: true, options: ["Default", "quickSet"], defaultValue: "Default"
+}
+section("Sync Thermostat and $switchMethod") {
+	input "setSync", "bool", title: "Turn on to Sync Thermostat and $switchMethod when Thermostat is changed", required: false, defaultValue: "false"
 }
 
 }
@@ -208,6 +222,7 @@ log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
 }
 //------------------SetPoint-Heating---------------   
    def heatingSetpointHandler(evt) {
+      if(setSync) {
    def TempMode = "Heating"
    state.TempMode = TempMode
         log.debug ""
@@ -228,9 +243,12 @@ log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
         }
 		Notification()
 }
+}
 
 //------------------SetPoint-Cooling---------------
+
 	def coolingSetpoint(evt) {
+	   if(setSync) {
 	def TempMode = "Cooling"
     state.TempMode = TempMode
 		log.debug ""
@@ -250,6 +268,7 @@ log.debug "switchSetLevelHandler Event: ${state.level} | TempMode: $TempMode"
         Cooling.off(delay: 2500)
         }
 		Notification()
+   }
    }
 
 def Notification(){
