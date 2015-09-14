@@ -1,0 +1,200 @@
+/**
+ *  Thermostat setPoint Step Increase/Decrease
+ *
+ *  Copyright 2015 Joseph Quander III
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ */
+definition(
+    name: "Thermostat Setpoints: V-Momentary Step Change v1",
+    namespace: "DR",
+    author: "Joseph Quander III",
+    description: "Momentary switches used to change setPoint incrementally for each momentary button push, one to increase and one for decrease.",
+    category: "Green Living",
+    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
+    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
+    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
+    oauth: true)
+
+
+preferences {
+
+	section("Increase the Thermostat setPoint in the active ThermostatMode when this is pressed...") {
+	 input "IncreaseMomentary", "capability.momentary", multiple: false,  title: "Momentary button is pushed to increase temperature...", required: false
+	}
+	section("Decrease the Thermostat setPoint in the active ThermostatMode when this is pressed...") {
+	 input "DecreaseMomentary", "capability.momentary", multiple: false,  title: "Momentary button is pushed to decrease temperature...", required: false
+	}   
+    section("Choose thermostat(s)") {
+	input "thermostat", "capability.thermostat", multiple: false, title: "Thermostat", required: true
+    }
+
+	section("Increase the Thermostat setPoint in the active ThermostatMode when this is pressed...") {
+	 input "IncreaseStep", "enum", multiple: false,  title: "Step increase by... [1-5]", 
+     metadata: [values: ["1","2","3","4","5"]], required: false, defaultValue: 1
+	}
+	section("Decrease the Thermostat setPoint in the active ThermostatMode when this is pressed...") {
+	 input "DecreaseStep", "enum", multiple: false,  title: "Step decrease by...[1-5]", 
+     	metadata: [values: ["1","2","3","4","5"]], required: false, defaultValue: 1
+	}
+    // need if statement to control step value above 10 and above the min/max setpoint of thermostat
+    section("Setpoint Default Limits: Minimum/Maximum [50/80]") {
+	input "setMinimum", "number", multiple: false, title: "Minimum Temperature", required: true, defaultValue: "50"
+	input "setMaximum", "number", multiple: false, title: "Maximum Temperature", required: true, defaultValue: "80"
+}
+    section("Notify me...") {
+     input "pushNotification_Setpoint", "bool", title: "Thermostat SetPoint change with Push Notification", required: false, defaultValue: "false", submitOnChange:true // refereshAfterSelection:true 
+    //if(pushNotification_Setpoint){
+	input "pushNotification_Silent", "bool", title: "Push Notification with Silent Alert", required: false, defaultValue: "false", submitOnChange:true
+//}
+}
+}
+//subscribe(button, "switch.on", appTouch)
+
+/*  def appTouch(evt) {
+log.debug "appTouch: $evt"
+}
+*/
+
+def installed() {
+log.debug "Installed with settings: ${settings}"
+
+	initialize()
+}
+
+def updated() {
+	log.debug "Updated with settings: ${settings}"
+
+	unsubscribe()
+	initialize()
+}
+
+def initialize()  {
+  state.TempDisplay = "°F"
+//state.TempDisplay = "°C"
+
+    subscribe(IncreaseMomentary, "momentary.pushed", IncreaseStepHandler)
+    subscribe(DecreaseMomentary, "momentary.pushed", DecreaseStepHandler)
+    
+}
+
+//import groovy.time.TimeCategory
+
+def IncreaseStepHandler(evt) {
+//   log.info "pushHandler Event Value: ${evt.value}" //  which event fired is here
+//   log.info "pushHandler Event Name: ${evt.name}"   //  name of device firing it here
+def ThermoMode = thermostat.currentValue("thermostatMode")
+def Thermofan = thermostat.currentValue("thermostatFanMode")
+def ThermoTemp = thermostat.currentValue("temperature")
+def ThermoHeat = thermostat.currentValue("heatingSetpoint")
+def ThermoCool = thermostat.currentValue("coolingSetpoint")
+def ThermoIH = ThermoHeat + IncreaseStep.toFloat()
+def ThermoIC = ThermoCool + IncreaseStep.toFloat()
+
+//-------Temperature Maximum Correction-------
+if(ThermoDH>setMaximum){
+ThermoDH=setMaximum
+log.debug "Heating: Thermostat SetLevel above limit. Reset to maximum Temperature: $setMaximum"
+}
+if(ThermoDC>setMaximum){
+ThermoDC=setMaximum
+log.debug "Cooling: Thermostat SetLevel above limit. Reset to maximum Temperature: $setMaximum"
+}
+//------------------------------------------
+
+ if(ThermoMode.contains('heat') ){
+ thermostat.setHeatingSetpoint(ThermoIH)
+	state.msg = "HSP - Previous setPoint: $ThermoHeat $state.TempDisplay || Increased to: $ThermoIH $state.TempDisplay"
+    log.debug "$state.msg"
+	getNotified()
+}
+if (ThermoMode.contains('cool')){
+ thermostat.setCoolingSetpoint(ThermoIC)
+	state.msg = "CSP -  Previous setPoint: $ThermoCool $state.TempDisplay || Increased to: $ThermoIC $state.TempDisplay"
+    log.debug "$state.msg"
+    getNotified()
+}
+if (ThermoMode.contains('auto')) {
+ thermostat.setHeatingSetpoint(ThermoIH)
+ thermostat.setCoolingSetpoint(ThermoIC)
+	state.msg = "AllSP - Previous setPoints: [$ThermoHeat $state.TempDisplay | $ThermoCool $state.TempDisplay] || Increased to: [$ThermoIH $state.TempDisplay | $ThermoIC $state.TempDisplay]"
+    log.debug "$state.msg"
+    getNotified()
+}
+if (ThermoMode.contains('off')) {
+	state.msg = "No Change setPoints. Thermostat is off"
+    log.debug "$state.msg"
+    getNotified()
+}
+log.info ("Step Change Set to: +$IncreaseStep || " + "ThermoMode-Mode: $ThermoMode" + " | Thermostat-State: " + thermostat.currentValue("thermostatOperatingState") + " | Thermofan-Status: $Thermofan" + " | Thermostat-HSP: $ThermoHeat $state.TempDisplay - " + " | Thermostat-CSP: $ThermoCool $state.TempDisplay - " + " | ThermoCurrent: $ThermoTemp $state.TempDisplay - " +  thermostat.currentValue("humidity")+ "%")
+}
+
+def DecreaseStepHandler(evt) {
+//   log.info "pushHandler Event Value: ${evt.value}" //  which event fired is here
+//   log.info "pushHandler Event Name: ${evt.name}"   //  name of device firing it here
+def ThermoMode = thermostat.currentValue("thermostatMode")
+def Thermofan = thermostat.currentValue("thermostatFanMode")
+def ThermoTemp = thermostat.currentValue("temperature")
+def ThermoHeat = thermostat.currentValue("heatingSetpoint")
+def ThermoCool = thermostat.currentValue("coolingSetpoint")
+def ThermoDH = ThermoHeat - DecreaseStep.toFloat()
+def ThermoDC = ThermoCool - DecreaseStep.toFloat()
+
+//-------Temperature Minimum Correction-------
+if(ThermoDH<setMinimum){
+ThermoDH=setMinimum
+log.debug "Heating: Thermostat SetLevel below limit. Reset to minimum Temperature: $setMinimum"
+}
+if(ThermoDC<setMinimum){
+ThermoDC=setMinimum
+log.debug "Cooling: Thermostat SetLevel below limit. Reset to minimum Temperature: $setMinimum"
+}
+//------------------------------------------
+
+if(ThermoMode.contains('heat') ){
+ thermostat.setHeatingSetpoint(ThermoDH)
+	state.msg = "HSP - Previous setPoint: $ThermoHeat $state.TempDisplay || Decreased to: $ThermoDH $state.TempDisplay"
+    log.debug "$state.msg"
+    getNotified()
+}
+if (ThermoMode.contains('cool')){
+ thermostat.setCoolingSetpoint(ThermoDC)
+	state.msg =  "CSP -  Previous setPoint: $ThermoCool $state.TempDisplay || Decreased to: $ThermoDC $state.TempDisplay"
+    log.debug "$state.msg"
+    getNotified()
+}
+if (ThermoMode.contains('auto') ) {
+ thermostat.setHeatingSetpoint(ThermoDH)
+ thermostat.setCoolingSetpoint(ThermoDC)
+	state.msg = "AllSP - Previous setPoints: [$ThermoHeat $state.TempDisplay | $ThermoCool $state.TempDisplay] || Decreased to: [$ThermoDH $state.TempDisplay | $ThermoDC $state.TempDisplay]"
+    log.debug "$state.msg"
+    getNotified()
+}
+if (ThermoMode.contains('off')) {
+	state.msg = "No Change setPoints. Thermostat is off"
+    log.debug "$state.msg"
+    getNotified()
+    }
+log.info ("Step Change Set to: -$DecreaseStep || " + "ThermoMode-Mode: $ThermoMode" + " | Thermostat-State: " + thermostat.currentValue("thermostatOperatingState") + " | Thermofan-Status: $Thermofan" + " | Thermostat-HSP: $ThermoHeat $state.TempDisplay - " + " | Thermostat-CSP: $ThermoCool $state.TempDisplay - " + " | ThermoCurrent: $ThermoTemp $state.TempDisplay - " +  thermostat.currentValue("humidity")+ "%")
+}
+//need off handler alert for feedback
+
+
+def getNotified(){
+def msg = state.msg
+//log.info msg
+          if (pushNotification_Setpoint && pushNotification_Silent) {
+            sendNotificationEvent(msg)
+        	}else if(pushNotification_Setpoint && pushNotification_Silent == false){
+            sendPush(msg)
+}
+  log.debug "NOTIFY---------------------------------------------"
+  }
