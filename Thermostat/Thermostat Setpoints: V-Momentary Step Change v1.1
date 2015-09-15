@@ -12,9 +12,17 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Date: 2015-09-14 Version 1.0 - Created App: Momentary switches used to change setPoint incrementally for each momentary button push,
+ *				one to increase and one for decrease. 
+ *
+ *	Date: 2015-09-14 Version 1.1 - Added setHeatingSetpoint()/setCoolingSetpoint() with quickSetHeat()/quickSetCool(), since the quick set
+ *				command for the Thermostat device type has a much shorter delay action in the custom Thermostat device type I am using.
+ *				Other Thermostat device types do may not have quickSet option and may not have any build in implemetation delays
+ *				with the standard SetPoint commands.
+ *
  */
 definition(
-    name: "Thermostat Setpoints: V-Momentary Step Change v1",
+    name: "Thermostat Setpoints: V-Momentary Step Change v1.1",
     namespace: "DR",
     author: "Joseph Quander III",
     description: "Momentary switches used to change setPoint incrementally for each momentary button push, one to increase and one for decrease.",
@@ -36,7 +44,9 @@ preferences {
     section("Choose thermostat(s)") {
 	input "thermostat", "capability.thermostat", multiple: false, title: "Thermostat", required: true
     }
-
+	section("Thermostat setPoint method: setHeatingSetpoint()/setCoolingSetpoint() or quickSetHeat()/quickSetCool()") {
+	input "setMethod", "enum", multiple: false, title: "Select Setpoint Method", required: true, options: ["Default", "quickSet"], defaultValue: "Default"
+}
 	section("Increase the Thermostat setPoint in the active ThermostatMode when this is pressed...") {
 	 input "IncreaseStep", "enum", multiple: false,  title: "Step increase by... [1-5]", 
      metadata: [values: ["1","2","3","4","5"]], required: false, defaultValue: 1
@@ -109,22 +119,43 @@ ThermoDC=setMaximum
 log.debug "Cooling: Thermostat SetLevel above limit. Reset to maximum Temperature: $setMaximum"
 }
 //------------------------------------------
-
+//quickSetCool quickSetHeat
  if(ThermoMode.contains('heat') ){
- thermostat.setHeatingSetpoint(ThermoIH)
+     if(setMethod == "Default"){
+     thermostat.setHeatingSetpoint(ThermoIH)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetHeat(ThermoIH)
+    }
+// ther
+ //thermostat.setHeatingSetpoint(ThermoIH)
 	state.msg = "HSP - Previous setPoint: $ThermoHeat $state.TempDisplay || Increased to: $ThermoIH $state.TempDisplay"
     log.debug "$state.msg"
 	getNotified()
 }
 if (ThermoMode.contains('cool')){
- thermostat.setCoolingSetpoint(ThermoIC)
+    if(setMethod == "Default"){
+     thermostat.setCoolingSetpoint(ThermoIC)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetCool(ThermoIC)
+    }
+ //thermostat.setCoolingSetpoint(ThermoIC)
 	state.msg = "CSP -  Previous setPoint: $ThermoCool $state.TempDisplay || Increased to: $ThermoIC $state.TempDisplay"
     log.debug "$state.msg"
     getNotified()
 }
 if (ThermoMode.contains('auto')) {
- thermostat.setHeatingSetpoint(ThermoIH)
- thermostat.setCoolingSetpoint(ThermoIC)
+    if(setMethod == "Default"){
+     thermostat.setCoolingSetpoint(ThermoIC)
+     thermostat.setHeatingSetpoint(ThermoIH)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetCool(ThermoIC)
+    thermostat.quickSetHeat(ThermoIH)
+    }
+ //thermostat.setHeatingSetpoint(ThermoIH)
+ //thermostat.setCoolingSetpoint(ThermoIC)
 	state.msg = "AllSP - Previous setPoints: [$ThermoHeat $state.TempDisplay | $ThermoCool $state.TempDisplay] || Increased to: [$ThermoIH $state.TempDisplay | $ThermoIC $state.TempDisplay]"
     log.debug "$state.msg"
     getNotified()
@@ -160,20 +191,40 @@ log.debug "Cooling: Thermostat SetLevel below limit. Reset to minimum Temperatur
 //------------------------------------------
 
 if(ThermoMode.contains('heat') ){
- thermostat.setHeatingSetpoint(ThermoDH)
+    if(setMethod == "Default"){
+     thermostat.setHeatingSetpoint(ThermoDC)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetHeat(ThermoDC)
+    }
+// thermostat.setHeatingSetpoint(ThermoDH)
 	state.msg = "HSP - Previous setPoint: $ThermoHeat $state.TempDisplay || Decreased to: $ThermoDH $state.TempDisplay"
     log.debug "$state.msg"
     getNotified()
 }
 if (ThermoMode.contains('cool')){
- thermostat.setCoolingSetpoint(ThermoDC)
+    if(setMethod == "Default"){
+     thermostat.setCoolingSetpoint(ThermoDC)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetCool(ThermoDC)
+    }
+ //thermostat.setCoolingSetpoint(ThermoDC)
 	state.msg =  "CSP -  Previous setPoint: $ThermoCool $state.TempDisplay || Decreased to: $ThermoDC $state.TempDisplay"
     log.debug "$state.msg"
     getNotified()
 }
 if (ThermoMode.contains('auto') ) {
- thermostat.setHeatingSetpoint(ThermoDH)
- thermostat.setCoolingSetpoint(ThermoDC)
+    if(setMethod == "Default"){
+     thermostat.setCoolingSetpoint(ThermoDC)
+     thermostat.setHeatingSetpoint(ThermoDH)
+    }
+    if(setMethod == "quickSet"){
+    thermostat.quickSetCool(ThermoDC)
+    thermostat.quickSetHeat(ThermoDH)
+    }
+ //thermostat.setHeatingSetpoint(ThermoDH)
+ //thermostat.setCoolingSetpoint(ThermoDC)
 	state.msg = "AllSP - Previous setPoints: [$ThermoHeat $state.TempDisplay | $ThermoCool $state.TempDisplay] || Decreased to: [$ThermoDH $state.TempDisplay | $ThermoDC $state.TempDisplay]"
     log.debug "$state.msg"
     getNotified()
