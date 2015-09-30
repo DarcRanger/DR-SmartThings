@@ -22,7 +22,7 @@ definition(
     name: "Thermostat Setpoints: V-Dimmers v2",
     namespace: "DR",
     author: "Joseph Quander III",
-    description: "This app uses two virtual dimmer switches to control Setpoint temperatures on a Thermostat.  This was develop to use with the Amazon Echo.",
+    description: "This app uses two virtual dimmer switches to control Setpoint temperatures on a Thermostat. This was develop to use with the Amazon Echo.",
     category: "Green Living",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Meta/temp_thermo-switch.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Meta/temp_thermo-switch@2x.png",
