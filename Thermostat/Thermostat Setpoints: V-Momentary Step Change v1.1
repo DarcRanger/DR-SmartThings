@@ -192,10 +192,10 @@ log.debug "Cooling: Thermostat SetLevel below limit. Reset to minimum Temperatur
 
 if(ThermoMode.contains('heat') ){
     if(setMethod == "Default"){
-     thermostat.setHeatingSetpoint(ThermoDC)
+     thermostat.setHeatingSetpoint(ThermoDH)
     }
     if(setMethod == "quickSet"){
-    thermostat.quickSetHeat(ThermoDC)
+    thermostat.quickSetHeat(ThermoDH)
     }
 // thermostat.setHeatingSetpoint(ThermoDH)
 	state.msg = "HSP - Previous setPoint: $ThermoHeat $state.TempDisplay || Decreased to: $ThermoDH $state.TempDisplay"
